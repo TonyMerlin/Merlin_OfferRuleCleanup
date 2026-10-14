@@ -8,11 +8,13 @@ define([
     return function (config, element) {
         var $root = $(element),
             $button = $root.find('[data-role="cleanup-offer-rules"]'),
+            $count = $root.find('[data-role="expired-count"]'),
             $progress = $root.find('[data-role="cleanup-progress"]'),
             deleted = 0,
             failed = [];
 
-        function finish() {
+        function finish(remaining) {
+            $count.text($t('Expired Make an Offer rules: %1').replace('%1', remaining));
             $progress.text($t('Finished: %1 rules deleted.').replace('%1', deleted));
             if (failed.length) {
                 $progress.append(document.createTextNode(' ' +
@@ -32,9 +34,9 @@ define([
                     after_id: afterId
                 }
             }).done(function (response) {
-                if (response.error || !Array.isArray(response.failed_ids) ||
-                    typeof response.last_id !== 'number') {
-                    $progress.text(response.error || $t('Cleanup stopped because the server returned an invalid response.'));
+                if (!response || response.error || !Array.isArray(response.failed_ids) ||
+                    typeof response.last_id !== 'number' || typeof response.deleted !== 'number') {
+                    $progress.text(response && response.error || $t('Cleanup stopped because the server returned an invalid response.'));
                     $button.prop('disabled', false);
                     return;
                 }
@@ -43,7 +45,7 @@ define([
                 failed = failed.concat(response.failed_ids);
                 $progress.text($t('Deleted %1 rules so far.').replace('%1', deleted));
                 if (response.done) {
-                    finish();
+                    finish(response.remaining);
                 } else {
                     runBatch(response.last_id);
                 }
