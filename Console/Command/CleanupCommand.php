@@ -27,12 +27,12 @@ class CleanupCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $today = $this->rules->today();
-        $count = $this->rules->count($today);
-        $output->writeln(sprintf('Expired Make an Offer rules before %s: %d', $today, $count));
+        $cutoffDate = $this->rules->cutoffDate();
+        $count = $this->rules->count($cutoffDate);
+        $output->writeln(sprintf('Make an Offer rules ended on or before %s: %d', $cutoffDate, $count));
 
         if (!$input->getOption('execute')) {
-            foreach ($this->rules->sample($today) as $rule) {
+            foreach ($this->rules->sample($cutoffDate) as $rule) {
                 $output->writeln(sprintf(
                     '  #%d  %s  ended %s',
                     $rule['rule_id'],
@@ -48,11 +48,11 @@ class CleanupCommand extends Command
         $deleted = 0;
         $failed = 0;
         $lastId = 0;
-        while ($ids = $this->rules->nextIds($today, $lastId, self::BATCH_SIZE)) {
+        while ($ids = $this->rules->nextIds($cutoffDate, $lastId, self::BATCH_SIZE)) {
             foreach ($ids as $id) {
                 $lastId = $id;
                 try {
-                    if ($this->rules->deleteIfStillExpired($id, $today)) {
+                    if ($this->rules->deleteIfStillExpired($id, $cutoffDate)) {
                         ++$deleted;
                     }
                 } catch (\Exception $exception) {

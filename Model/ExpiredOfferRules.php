@@ -12,6 +12,7 @@ use Magento\SalesRule\Model\Rule;
 
 class ExpiredOfferRules
 {
+    private const RETENTION_MONTHS = 6;
     private const RULE_NAME_PATTERN = '^Make an Offer #[0-9]+$';
     private const RULE_DESCRIPTION = 'Auto Generation Coupon';
 
@@ -22,23 +23,32 @@ class ExpiredOfferRules
     ) {
     }
 
-    public function today(): string
+    public function cutoffDate(): string
     {
-        return $this->date->gmtDate('Y-m-d');
+        $today = new \DateTimeImmutable($this->date->gmtDate('Y-m-d'), new \DateTimeZone('UTC'));
+        $targetMonth = $today->modify('first day of this month')
+            ->sub(new \DateInterval('P' . self::RETENTION_MONTHS . 'M'));
+        $day = min((int)$today->format('j'), (int)$targetMonth->format('t'));
+
+        return $targetMonth->setDate(
+            (int)$targetMonth->format('Y'),
+            (int)$targetMonth->format('n'),
+            $day
+        )->format('Y-m-d');
     }
 
-    public function count(string $today): int
+    public function count(string $cutoffDate): int
     {
         $connection = $this->resource->getConnection();
-        $select = $this->candidateSelect($today)->reset(Select::COLUMNS)->columns('COUNT(*)');
+        $select = $this->candidateSelect($cutoffDate)->reset(Select::COLUMNS)->columns('COUNT(*)');
 
         return (int)$connection->fetchOne($select);
     }
 
     /** @return array<int, array<string, mixed>> */
-    public function sample(string $today, int $limit = 20): array
+    public function sample(string $cutoffDate, int $limit = 20): array
     {
-        $select = $this->candidateSelect($today)
+        $select = $this->candidateSelect($cutoffDate)
             ->columns(['rule_id', 'name', 'to_date'])
             ->order('rule_id ASC')
             ->limit($limit);
@@ -47,9 +57,9 @@ class ExpiredOfferRules
     }
 
     /** @return int[] */
-    public function nextIds(string $today, int $afterId, int $limit): array
+    public function nextIds(string $cutoffDate, int $afterId, int $limit): array
     {
-        $select = $this->candidateSelect($today)
+        $select = $this->candidateSelect($cutoffDate)
             ->columns('rule_id')
             ->where('rule_id > ?', $afterId)
             ->order('rule_id ASC')
@@ -58,9 +68,9 @@ class ExpiredOfferRules
         return array_map('intval', $this->resource->getConnection()->fetchCol($select));
     }
 
-    public function deleteIfStillExpired(int $ruleId, string $today): bool
+    public function deleteIfStillExpired(int $ruleId, string $cutoffDate): bool
     {
-        $select = $this->candidateSelect($today)
+        $select = $this->candidateSelect($cutoffDate)
             ->reset(Select::COLUMNS)
             ->columns('rule_id')
             ->where('rule_id = ?', $ruleId);
@@ -74,7 +84,7 @@ class ExpiredOfferRules
         return true;
     }
 
-    private function candidateSelect(string $today): Select
+    private function candidateSelect(string $cutoffDate): Select
     {
         return $this->resource->getConnection()->select()
             ->from($this->resource->getTableName('salesrule'), [])
@@ -82,6 +92,6 @@ class ExpiredOfferRules
             ->where('description = ?', self::RULE_DESCRIPTION)
             ->where('coupon_type = ?', Rule::COUPON_TYPE_SPECIFIC)
             ->where('simple_action = ?', RuleInterface::DISCOUNT_ACTION_FIXED_AMOUNT_FOR_CART)
-            ->where('to_date < ?', $today);
+            ->where('to_date <= ?', $cutoffDate);
     }
 }

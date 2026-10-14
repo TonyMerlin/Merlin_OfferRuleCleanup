@@ -14,7 +14,8 @@ define([
             failed = [];
 
         function finish(remaining) {
-            $count.text($t('Expired Make an Offer rules: %1').replace('%1', remaining));
+            $count.text($t('Make an Offer rules ended on or before %1: %2')
+                .replace('%1', config.cutoffDate).replace('%2', remaining));
             $progress.text($t('Finished: %1 rules deleted.').replace('%1', deleted));
             if (failed.length) {
                 $progress.append(document.createTextNode(' ' +
@@ -57,8 +58,8 @@ define([
 
         $button.on('click', function () {
             confirm({
-                title: $t('Delete expired Make an Offer rules?'),
-                content: $t('This will permanently delete the expired rules and their coupons.'),
+                title: $t('Delete older Make an Offer rules?'),
+                content: $t('This will permanently delete Make an Offer rules that ended at least six months ago and their coupons.'),
                 actions: {
                     confirm: function () {
                         deleted = 0;

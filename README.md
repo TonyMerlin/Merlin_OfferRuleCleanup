@@ -4,9 +4,9 @@ Bulk cleanup for expired cart price rules created by `Neklo_MakeAnOffer`.
 
 ## Use in Magento Admin
 
-1. Open **Marketing → Promotions → Cart Price Rules** with an account allowed to manage cart price rules.
-2. Check the **Expired Make an Offer rules** count above the grid.
-3. Click **Delete expired Make an Offer rules** and confirm.
+1. Open **Marketing â†’ Promotions â†’ Cart Price Rules** with an account allowed to manage cart price rules.
+2. Check the count and cutoff date above the grid.
+3. Click **Delete older Make an Offer rules** and confirm.
 4. Keep the page open while the progress message updates. The button processes 50 rules per request and reports any rule IDs that could not be deleted.
 
 If the browser or a request stops, refresh the page and run the cleanup again. Already deleted rules are skipped. Failed rule IDs remain eligible and can be retried after the underlying error is resolved; details are written to the Magento log.
@@ -19,9 +19,9 @@ A cart price rule must meet **all** of these conditions:
 - Description is exactly `Auto Generation Coupon`.
 - Coupon type is **Specific Coupon**.
 - Discount action is **Fixed amount discount for whole cart** (`cart_fixed`).
-- End date is before the current UTC date.
+- End date is on or before the date six calendar months before the current UTC date. For example, on 14 October 2026 the cutoff is 14 April 2026.
 
-The cleanup includes rules still marked Active after their end date. It also includes older Make an Offer rules with different automatic generation or coupon usage settings. Rules without an end date and rules expiring today or later are excluded.
+The cleanup includes rules still marked Active after their end date. It also includes older Make an Offer rules with different automatic generation or coupon usage settings. Rules without an end date and rules ended after the cutoff date are excluded. At month ends, the cutoff uses the last day of the target month if necessary (for example, 31 August becomes 28 February in a non-leap year).
 
 Each rule is checked again immediately before deletion. Deletion uses Magento's sales rule repository, which also removes the rule's coupon records. Make an Offer request history is not deleted. There is no scheduled cleanup; an admin must start it.
 
