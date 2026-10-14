@@ -81,8 +81,6 @@ class ExpiredOfferRules
             ->where('name REGEXP ?', self::RULE_NAME_PATTERN)
             ->where('description = ?', self::RULE_DESCRIPTION)
             ->where('coupon_type = ?', Rule::COUPON_TYPE_SPECIFIC)
-            ->where('use_auto_generation = ?', 1)
-            ->where('uses_per_coupon = ?', 1)
             ->where('simple_action = ?', RuleInterface::DISCOUNT_ACTION_FIXED_AMOUNT_FOR_CART)
             ->where('to_date < ?', $today);
     }
