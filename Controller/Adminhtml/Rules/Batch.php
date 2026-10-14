@@ -49,11 +49,14 @@ class Batch extends Action implements HttpPostActionInterface
             }
         }
 
+        $done = count($ids) < self::BATCH_SIZE;
+
         return $this->jsonFactory->create()->setData([
             'deleted' => $deleted,
             'failed_ids' => $failedIds,
             'last_id' => $ids ? end($ids) : $afterId,
-            'done' => count($ids) < self::BATCH_SIZE,
+            'done' => $done,
+            'remaining' => $done ? $this->rules->count($today) : null,
         ]);
     }
 }
