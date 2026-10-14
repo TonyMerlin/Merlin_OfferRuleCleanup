@@ -19,7 +19,12 @@ class Cleanup extends Template
 
     public function getExpiredCount(): int
     {
-        return $this->rules->count($this->rules->today());
+        return $this->rules->count($this->getCutoffDate());
+    }
+
+    public function getCutoffDate(): string
+    {
+        return $this->rules->cutoffDate();
     }
 
     public function getCleanupUrl(): string
