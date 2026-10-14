@@ -31,13 +31,13 @@ class Batch extends Action implements HttpPostActionInterface
             return $this->jsonFactory->create()->setData(['error' => (string)__('Invalid rule cursor.')]);
         }
 
-        $today = $this->rules->today();
-        $ids = $this->rules->nextIds($today, $afterId, self::BATCH_SIZE);
+        $cutoffDate = $this->rules->cutoffDate();
+        $ids = $this->rules->nextIds($cutoffDate, $afterId, self::BATCH_SIZE);
         $deleted = 0;
         $failedIds = [];
         foreach ($ids as $id) {
             try {
-                if ($this->rules->deleteIfStillExpired($id, $today)) {
+                if ($this->rules->deleteIfStillExpired($id, $cutoffDate)) {
                     ++$deleted;
                 }
             } catch (\Exception $exception) {
@@ -56,7 +56,7 @@ class Batch extends Action implements HttpPostActionInterface
             'failed_ids' => $failedIds,
             'last_id' => $ids ? end($ids) : $afterId,
             'done' => $done,
-            'remaining' => $done ? $this->rules->count($today) : null,
+            'remaining' => $done ? $this->rules->count($cutoffDate) : null,
         ]);
     }
 }
