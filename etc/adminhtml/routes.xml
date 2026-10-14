@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:App/etc/routes.xsd">
+    <router id="admin">
+        <route id="merlin_offer_rule_cleanup" frontName="merlin_offer_rule_cleanup">
+            <module name="Merlin_OfferRuleCleanup"/>
+        </route>
+    </router>
+</config>
